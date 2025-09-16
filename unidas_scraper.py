@@ -324,7 +324,13 @@ class UnidasScraper:
             conteudo_pagina = self.driver.page_source.lower()
             
             # Verificar palavras-chave de SUV ou Minivan
-            palavras_suv = ['suv', 'utilitário', 'minivan', 'van', 'sw5', 'sw7', 'jeep', 'compass', 'renegade', 'ecosport', 'duster']
+            palavras_suv = [
+                'suv', 'utilitário', 'minivan', 'van', 'sw5', 'sw7', 
+                'jeep', 'compass', 'renegade', 'ecosport', 'duster',
+                'carro minivan', 'minivan 7 lugares', '7 lugares',
+                'chevrolet spin', 'spin', 'fiat doblo', 'doblo',
+                'grupo i', 'categoria i'
+            ]
             
             veiculos_encontrados = []
             for palavra in palavras_suv:
@@ -335,26 +341,57 @@ class UnidasScraper:
             if veiculos_encontrados:
                 logger.info(f"Possíveis veículos encontrados: {veiculos_encontrados}")
                 
-                # Tentar extrair informações mais específicas
-                try:
-                    # Procurar indicadores de preço ou disponibilidade
-                    elementos_preco = self.driver.find_elements(By.CSS_SELECTOR, "[class*='price'], [class*='valor'], [class*='preco']")
-                    elementos_disponivel = self.driver.find_elements(By.CSS_SELECTOR, "[class*='available'], [class*='disponivel']")
-                    
-                    if elementos_preco or elementos_disponivel:
-                        return {
-                            'disponivel': True,
-                            'veiculos': veiculos_encontrados,
-                            'detalhes': f"Encontrados veículos da categoria SUV/Minivan disponíveis"
-                        }
-                except:
-                    pass
+                # Verificar se não está esgotado/indisponível - buscar próximo ao veículo encontrado
+                palavras_indisponivel = ['esgotado', 'indisponível', 'não disponível', 'sem estoque', 'sold out']
+                esta_disponivel = True
                 
-                return {
-                    'disponivel': True,
-                    'veiculos': veiculos_encontrados,
-                    'detalhes': f"Possíveis veículos encontrados: {', '.join(veiculos_encontrados)}"
-                }
+                # Verificar contexto específico para cada veículo encontrado
+                for veiculo in veiculos_encontrados:
+                    # Encontrar a posição do veículo no texto
+                    pos_veiculo = conteudo_pagina.find(veiculo)
+                    if pos_veiculo != -1:
+                        # Verificar texto ao redor do veículo (500 caracteres antes e depois)
+                        inicio = max(0, pos_veiculo - 500)
+                        fim = min(len(conteudo_pagina), pos_veiculo + 500)
+                        contexto = conteudo_pagina[inicio:fim]
+                        
+                        # Verificar se há palavras de indisponibilidade no contexto
+                        for palavra in palavras_indisponivel:
+                            if palavra in contexto:
+                                logger.info(f"Veículo {veiculo} encontrado mas indisponível: {palavra}")
+                                esta_disponivel = False
+                                break
+                        
+                        if not esta_disponivel:
+                            break
+                
+                if esta_disponivel:
+                    try:
+                        # Tentar capturar mais detalhes sobre os veículos
+                        detalhes_elementos = self.driver.find_elements(By.CSS_SELECTOR, ".vehicle-details, .car-info, .price, .disponivel")
+                        detalhes = [elem.text for elem in detalhes_elementos[:3]]  # Primeiros 3 elementos
+                    except:
+                        detalhes = []
+                
+                    return {
+                        'disponivel': True,
+                        'veiculos': veiculos_encontrados,
+                        'detalhes': f"Veículos DISPONÍVEIS encontrados: {', '.join(veiculos_encontrados)}"
+                    }
+                else:
+                    logger.info("Veículos encontrados mas todos estão esgotados/indisponíveis")
+                    return {'disponivel': False, 'veiculos': [], 'detalhes': 'Veículos encontrados mas esgotados'}
+                
+            # Se chegou até aqui, verificar se há alguma indicação de disponibilidade geral
+            palavras_disponivel = ['disponível', 'reservar', 'selecionar', 'escolher']
+            for palavra in palavras_disponivel:
+                if palavra in conteudo_pagina:
+                    logger.info(f"Possível disponibilidade detectada: {palavra}")
+                    return {
+                        'disponivel': True,
+                        'veiculos': ['Veículo disponível'],
+                        'detalhes': f"Disponibilidade detectada: {palavra}"
+                    }
             
             # Verificar mensagens de "sem resultados" ou "indisponível"
             palavras_sem_resultado = ['não encontrado', 'indisponível', 'sem resultado', 'nenhum veículo', 'no results']
