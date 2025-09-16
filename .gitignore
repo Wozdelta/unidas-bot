@@ -1,0 +1,46 @@
+# Arquivos Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Logs
+*.log
+debug_*.png
+debug_*.html
+pagina_debug.html
+mensagens_whatsapp.log
+notificacoes.txt
+
+# Ambiente
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Chrome/Selenium
+chromedriver*
+*.crx
+
+# Sistema
+.DS_Store
+Thumbs.db
