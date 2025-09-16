@@ -90,7 +90,7 @@ class BotMonitorUnidas:
         logger.info("- Data de retirada: 26/12/2025 às 08:00")
         logger.info("- Data de devolução: 03/01/2026 às 12:00")
         logger.info("- Local: Aeroporto de Ribeirão Preto, Ribeirão Preto - SP")
-        logger.info("- Categoria: SUV 4 portas ou Minivan")
+        logger.info("- Categoria: SUV 4 portas, Minivan 7 lugares, Chevrolet Spin, Fiat Doblo")
         logger.info("- Verificação: a cada 30 minutos")
         logger.info("- Relatório: a cada 1 hora")
         
