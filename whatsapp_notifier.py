@@ -91,6 +91,12 @@ Link: https://www.unidas.com.br/para-voce/reservas-nacionais
             return self.enviar_notificacao(mensagem)
         
         return False
+    
+    def enviar_mensagem_personalizada(self, mensagem):
+        """
+        Enviar uma mensagem personalizada via WhatsApp
+        """
+        return self.enviar_notificacao(mensagem)
 
 # Métodos alternativos de notificação para backup
 class NotificadorAlternativo:
