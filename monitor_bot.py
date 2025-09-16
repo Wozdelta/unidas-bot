@@ -92,12 +92,13 @@ class BotMonitorUnidas:
         logger.info("- Local: Aeroporto de Ribeirão Preto, Ribeirão Preto - SP")
         logger.info("- Categoria: SUV 4 portas ou Minivan")
         logger.info("- Verificação: a cada 30 minutos")
+        logger.info("- Relatório: a cada 1 hora")
         
         # Agendar o trabalho a cada 30 minutos
         schedule.every(30).minutes.do(self.verificar_e_notificar)
         
-        # Agendar relatório diário às 1h da manhã
-        schedule.every().day.at("01:00").do(self.enviar_relatorio_diario)
+        # Agendar relatório a cada 1 hora
+        schedule.every().hour.do(self.enviar_relatorio_horario)
         
         # Executar verificação inicial
         self.verificar_e_notificar()
@@ -164,8 +165,46 @@ class BotMonitorUnidas:
         except Exception as e:
             logger.error(f"Erro ao salvar estatísticas: {e}")
     
+    def enviar_relatorio_horario(self):
+        """Enviar relatório a cada 1 hora"""
+        try:
+            logger.info("Gerando relatório horário...")
+            
+            hora_atual = datetime.now().strftime('%H:%M')
+            data_atual = datetime.now().strftime('%d/%m/%Y')
+            
+            # Preparar mensagem do relatório
+            mensagem = f"📊 *RELATÓRIO HORÁRIO - UNIDAS BOT*\n"
+            mensagem += f"📅 Data: {data_atual} - {hora_atual}\n\n"
+            mensagem += f"🔍 Tentativas hoje: {self.estatisticas.get('tentativas', 0)}\n"
+            mensagem += f"🚗 Carros encontrados hoje: {self.estatisticas.get('carros_encontrados', 0)}\n"
+            mensagem += f"📱 Notificações enviadas: {self.estatisticas.get('notificacoes_enviadas', 0)}\n"
+            mensagem += f"❌ Erros ocorridos: {self.estatisticas.get('erros', 0)}\n\n"
+            
+            if self.estatisticas.get('ultimo_carro_encontrado'):
+                mensagem += f"🕐 Último carro encontrado: {self.estatisticas.get('ultimo_carro_encontrado')}\n\n"
+            else:
+                mensagem += f"ℹ️ Nenhum carro encontrado hoje\n\n"
+            
+            mensagem += f"🔄 Bot funcionando normalmente\n"
+            mensagem += f"⏰ Próxima verificação: a cada 30 minutos\n"
+            mensagem += f"📈 Próximo relatório: em 1 hora"
+            
+            # Enviar relatório via WhatsApp
+            sucesso = self.notificador_whatsapp.enviar_mensagem_personalizada(mensagem)
+            
+            if sucesso:
+                logger.info("Relatório horário enviado com sucesso")
+            else:
+                logger.warning("Falha ao enviar relatório horário via WhatsApp")
+                # Salvar em arquivo como backup
+                NotificadorAlternativo.salvar_em_arquivo(f"RELATÓRIO HORÁRIO: {mensagem}")
+            
+        except Exception as e:
+            logger.error(f"Erro ao enviar relatório horário: {str(e)}")
+    
     def enviar_relatorio_diario(self):
-        """Enviar relatório diário às 1h da manhã"""
+        """Enviar relatório diário às 1h da manhã (mantido para compatibilidade)"""
         try:
             logger.info("Gerando relatório diário...")
             

@@ -1,5 +1,9 @@
+import os
 import time
 import logging
+import platform
+import glob
+import subprocess
 from datetime import datetime, timedelta
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -44,7 +48,6 @@ class UnidasScraper:
         opcoes_chrome.add_experimental_option('useAutomationExtension', False)
         
         # Detectar ambiente (Windows vs Linux)
-        import platform
         sistema = platform.system().lower()
         
         try:
@@ -53,8 +56,6 @@ class UnidasScraper:
                 logger.info("Detectado ambiente Linux - configurando Chromium")
                 
                 # Tentar encontrar Chromium no sistema
-                import glob
-                import subprocess
                 
                 chromium_path = None
                 
