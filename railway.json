@@ -1,7 +1,10 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE"
+  },
   "deploy": {
-    "startCommand": "python monitor_bot.py",
+    "startCommand": "xvfb-run -a python monitor_bot.py",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

@@ -55,71 +55,27 @@ class UnidasScraper:
                 # Configuração para ambiente Linux (Railway/Docker)
                 logger.info("Detectado ambiente Linux - configurando Chromium")
                 
-                # Tentar encontrar Chrome/Chromium no sistema
+                # Configuração para Docker/Railway com Google Chrome
+                logger.info("Configurando Google Chrome para ambiente Docker...")
                 
-                chromium_path = None
+                # Usar Google Chrome instalado via apt
+                opcoes_chrome.binary_location = '/usr/bin/google-chrome-stable'
                 
-                # Primeiro, tentar Google Chrome no Nix
+                # Usar ChromeDriver do sistema
                 try:
-                    nix_chrome_paths = glob.glob('/nix/store/*/bin/google-chrome-stable')
-                    if nix_chrome_paths:
-                        chromium_path = nix_chrome_paths[0]
-                        logger.info(f"Google Chrome encontrado no Nix: {chromium_path}")
-                except:
-                    pass
-                
-                # Se não encontrou, tentar Chromium no Nix
-                if not chromium_path:
+                    self.driver = webdriver.Chrome(options=opcoes_chrome)
+                    logger.info("Google Chrome inicializado com sucesso")
+                except Exception as e:
+                    logger.error(f"Erro ao inicializar Google Chrome: {e}")
+                    # Fallback para webdriver-manager
                     try:
-                        nix_chromium_paths = glob.glob('/nix/store/*/bin/chromium')
-                        if nix_chromium_paths:
-                            chromium_path = nix_chromium_paths[0]
-                            logger.info(f"Chromium encontrado no Nix: {chromium_path}")
-                    except:
-                        pass
-                
-                # Tentar encontrar via which
-                if not chromium_path:
-                    for browser in ['google-chrome-stable', 'google-chrome', 'chromium']:
-                        try:
-                            result = subprocess.run(['which', browser], capture_output=True, text=True)
-                            if result.returncode == 0 and result.stdout.strip():
-                                chromium_path = result.stdout.strip()
-                                logger.info(f"{browser} encontrado via which: {chromium_path}")
-                                break
-                        except:
-                            continue
-                
-                # Fallback para caminhos tradicionais
-                if not chromium_path:
-                    caminhos_browser = [
-                        '/usr/bin/google-chrome-stable',
-                        '/usr/bin/google-chrome',
-                        '/usr/bin/chromium',
-                        '/usr/bin/chromium-browser'
-                    ]
-                    
-                    for caminho in caminhos_browser:
-                        if os.path.exists(caminho):
-                            chromium_path = caminho
-                            logger.info(f"Browser encontrado em: {caminho}")
-                            break
-                
-                if chromium_path:
-                    opcoes_chrome.binary_location = chromium_path
-                    # Tentar usar chromedriver do sistema primeiro
-                    try:
-                        chromedriver_paths = glob.glob('/nix/store/*/bin/chromedriver')
-                        if chromedriver_paths:
-                            servico = Service(chromedriver_paths[0])
-                            self.driver = webdriver.Chrome(service=servico, options=opcoes_chrome)
-                        else:
-                            self.driver = webdriver.Chrome(options=opcoes_chrome)
-                    except:
-                        self.driver = webdriver.Chrome(options=opcoes_chrome)
-                else:
-                    logger.error("Nenhum browser Chrome/Chromium encontrado no sistema")
-                    raise Exception("Chrome/Chromium não encontrado")
+                        from webdriver_manager.chrome import ChromeDriverManager
+                        servico = Service(ChromeDriverManager().install())
+                        self.driver = webdriver.Chrome(service=servico, options=opcoes_chrome)
+                        logger.info("Chrome inicializado com webdriver-manager")
+                    except Exception as e2:
+                        logger.error(f"Erro no fallback: {e2}")
+                        raise Exception("Não foi possível inicializar o navegador Chrome")
             else:
                 # Configuração para Windows
                 logger.info("Detectado ambiente Windows - configurando Chrome")
