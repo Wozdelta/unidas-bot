@@ -27,16 +27,18 @@ class UnidasScraper:
         self.wait = None
         
     def configurar_driver(self):
-        """Configurar Chrome WebDriver com opções apropriadas"""
+        # Configurar opções do Chrome para ambiente headless
         opcoes_chrome = Options()
-        opcoes_chrome.add_argument('--headless')  # Executar em segundo plano
+        opcoes_chrome.add_argument('--headless')
         opcoes_chrome.add_argument('--no-sandbox')
         opcoes_chrome.add_argument('--disable-dev-shm-usage')
         opcoes_chrome.add_argument('--disable-gpu')
         opcoes_chrome.add_argument('--window-size=1920,1080')
-        opcoes_chrome.add_argument('--disable-web-security')
-        opcoes_chrome.add_argument('--allow-running-insecure-content')
-        opcoes_chrome.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        opcoes_chrome.add_argument('--disable-extensions')
+        opcoes_chrome.add_argument('--disable-plugins')
+        opcoes_chrome.add_argument('--disable-images')
+        opcoes_chrome.add_experimental_option('excludeSwitches', ['enable-logging'])
+        opcoes_chrome.add_experimental_option('useAutomationExtension', False)
         
         try:
             # Tentar usar ChromeDriverManager com configuração específica para Windows
