@@ -37,24 +37,85 @@ class UnidasScraper:
         opcoes_chrome.add_argument('--disable-extensions')
         opcoes_chrome.add_argument('--disable-plugins')
         opcoes_chrome.add_argument('--disable-images')
+        opcoes_chrome.add_argument('--remote-debugging-port=9222')
+        opcoes_chrome.add_argument('--disable-web-security')
+        opcoes_chrome.add_argument('--allow-running-insecure-content')
         opcoes_chrome.add_experimental_option('excludeSwitches', ['enable-logging'])
         opcoes_chrome.add_experimental_option('useAutomationExtension', False)
         
+        # Detectar ambiente (Windows vs Linux)
+        import platform
+        sistema = platform.system().lower()
+        
         try:
-            # Tentar usar ChromeDriverManager com configuração específica para Windows
-            from webdriver_manager.chrome import ChromeDriverManager
-            from webdriver_manager.core.os_manager import ChromeType
-            
-            servico = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
-            self.driver = webdriver.Chrome(service=servico, options=opcoes_chrome)
+            if sistema == 'linux':
+                # Configuração para ambiente Linux (Railway/Docker)
+                logger.info("Detectado ambiente Linux - configurando Chromium")
+                
+                # Tentar encontrar Chromium no sistema
+                import glob
+                import subprocess
+                
+                chromium_path = None
+                
+                # Primeiro, tentar encontrar via which/whereis
+                try:
+                    result = subprocess.run(['which', 'chromium'], capture_output=True, text=True)
+                    if result.returncode == 0 and result.stdout.strip():
+                        chromium_path = result.stdout.strip()
+                        logger.info(f"Chromium encontrado via which: {chromium_path}")
+                except:
+                    pass
+                
+                # Se não encontrou, tentar caminhos específicos do Nix
+                if not chromium_path:
+                    nix_paths = glob.glob('/nix/store/*/bin/chromium')
+                    if nix_paths:
+                        chromium_path = nix_paths[0]
+                        logger.info(f"Chromium encontrado no Nix: {chromium_path}")
+                
+                # Fallback para caminhos tradicionais
+                if not chromium_path:
+                    caminhos_chromium = [
+                        '/usr/bin/chromium',
+                        '/usr/bin/chromium-browser', 
+                        '/usr/bin/google-chrome',
+                        '/usr/bin/google-chrome-stable'
+                    ]
+                    
+                    for caminho in caminhos_chromium:
+                        if os.path.exists(caminho):
+                            chromium_path = caminho
+                            logger.info(f"Chromium encontrado em: {caminho}")
+                            break
+                
+                if chromium_path:
+                    opcoes_chrome.binary_location = chromium_path
+                    self.driver = webdriver.Chrome(options=opcoes_chrome)
+                else:
+                    # Tentar com webdriver-manager para Linux
+                    from webdriver_manager.chrome import ChromeDriverManager
+                    from webdriver_manager.core.os_manager import ChromeType
+                    
+                    servico = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
+                    self.driver = webdriver.Chrome(service=servico, options=opcoes_chrome)
+            else:
+                # Configuração para Windows
+                logger.info("Detectado ambiente Windows - configurando Chrome")
+                try:
+                    from webdriver_manager.chrome import ChromeDriverManager
+                    from webdriver_manager.core.os_manager import ChromeType
+                    
+                    servico = Service(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install())
+                    self.driver = webdriver.Chrome(service=servico, options=opcoes_chrome)
+                except Exception as e:
+                    logger.warning(f"Erro ao configurar ChromeDriverManager: {e}")
+                    # Fallback: tentar Chrome padrão do sistema
+                    self.driver = webdriver.Chrome(options=opcoes_chrome)
+                    
         except Exception as e:
-            logger.warning(f"Erro ao configurar ChromeDriverManager: {e}")
-            # Fallback: tentar usar Chrome padrão do sistema
-            try:
-                self.driver = webdriver.Chrome(options=opcoes_chrome)
-            except Exception as e2:
-                logger.error(f"Erro ao inicializar Chrome: {e2}")
-                raise Exception("Não foi possível inicializar o navegador Chrome. Verifique se o Chrome está instalado.")
+            logger.error(f"Erro ao inicializar Chrome/Chromium: {e}")
+            raise Exception("Não foi possível inicializar o navegador Chrome. Verifique se o Chrome está instalado.")
         
         self.wait = WebDriverWait(self.driver, 20)
         
