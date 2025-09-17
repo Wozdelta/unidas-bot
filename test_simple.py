@@ -20,7 +20,7 @@ try:
     print(f"✅ Selenium: {selenium.__version__}")
     
     import schedule
-    print(f"✅ Schedule: {schedule.__version__}")
+    print("✅ Schedule: OK")
     
     import requests
     print(f"✅ Requests: {requests.__version__}")
