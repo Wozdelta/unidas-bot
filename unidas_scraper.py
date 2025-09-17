@@ -31,6 +31,9 @@ class UnidasScraper:
         self.wait = None
         
     def configurar_driver(self):
+        print("🔧 Configurando driver do navegador...")
+        logger.info("🔧 Configurando driver do navegador...")
+        
         # Configurar opções do Chrome para ambiente headless
         opcoes_chrome = Options()
         opcoes_chrome.add_argument('--headless')
@@ -46,6 +49,9 @@ class UnidasScraper:
         opcoes_chrome.add_argument('--allow-running-insecure-content')
         opcoes_chrome.add_experimental_option('excludeSwitches', ['enable-logging'])
         opcoes_chrome.add_experimental_option('useAutomationExtension', False)
+        
+        print("✅ Opções do Chrome configuradas")
+        logger.info("✅ Opções do Chrome configuradas")
         
         # Detectar ambiente (Windows vs Linux)
         sistema = platform.system().lower()

@@ -29,5 +29,5 @@ COPY . .
 # Expose port (if needed)
 EXPOSE 8080
 
-# Start command (unbuffered stdout)
-CMD ["xvfb-run", "-a", "python", "-u", "monitor_bot.py"]
+# Start command (unbuffered stdout + immediate logs)
+CMD ["sh", "-c", "echo '🚀 CONTAINER INICIADO' && xvfb-run -a python -u monitor_bot.py"]

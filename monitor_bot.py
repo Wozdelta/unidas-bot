@@ -24,14 +24,51 @@ logger = logging.getLogger(__name__)
 
 class BotMonitorUnidas:
     def __init__(self):
-        self.scraper = UnidasScraper()
-        self.notificador_whatsapp = NotificadorWhatsApp(
-            numero_telefone=os.getenv('WHATSAPP_PHONE_NUMBER')
-        )
+        print("🔧 Inicializando componentes do bot...")
+        logger.info("🔧 Inicializando componentes do bot...")
+        
+        try:
+            print("🌐 Criando scraper...")
+            logger.info("🌐 Criando scraper...")
+            self.scraper = UnidasScraper()
+            print("✅ Scraper criado com sucesso!")
+            logger.info("✅ Scraper criado com sucesso!")
+        except Exception as e:
+            print(f"❌ Erro ao criar scraper: {e}")
+            logger.error(f"❌ Erro ao criar scraper: {e}")
+            raise
+        
+        try:
+            print("📱 Configurando notificador WhatsApp...")
+            logger.info("📱 Configurando notificador WhatsApp...")
+            whatsapp_number = os.getenv('WHATSAPP_PHONE_NUMBER')
+            print(f"📞 Número WhatsApp: {whatsapp_number}")
+            logger.info(f"📞 Número WhatsApp: {whatsapp_number}")
+            
+            self.notificador_whatsapp = NotificadorWhatsApp(
+                numero_telefone=whatsapp_number
+            )
+            print("✅ Notificador WhatsApp configurado!")
+            logger.info("✅ Notificador WhatsApp configurado!")
+        except Exception as e:
+            print(f"❌ Erro ao configurar WhatsApp: {e}")
+            logger.error(f"❌ Erro ao configurar WhatsApp: {e}")
+            raise
+        
         self.ultimo_horario_notificacao = None
         self.intervalo_notificacao = 3600  # 1 hora de intervalo entre notificações
         self.arquivo_estatisticas = 'estatisticas_bot.json'
-        self.carregar_estatisticas()
+        
+        try:
+            print("📊 Carregando estatísticas...")
+            logger.info("📊 Carregando estatísticas...")
+            self.carregar_estatisticas()
+            print("✅ Estatísticas carregadas!")
+            logger.info("✅ Estatísticas carregadas!")
+        except Exception as e:
+            print(f"❌ Erro ao carregar estatísticas: {e}")
+            logger.error(f"❌ Erro ao carregar estatísticas: {e}")
+            raise
         
     def verificar_e_notificar(self):
         """Função principal de monitoramento"""
@@ -246,19 +283,43 @@ def main():
     """Função principal"""
     import sys
     
-    bot = BotMonitorUnidas()
+    print("🚀 INICIANDO BOT UNIDAS - DEBUG MODE")
+    logger.info("🚀 INICIANDO BOT UNIDAS - DEBUG MODE")
     
-    if len(sys.argv) > 1 and sys.argv[1] == '--test':
-        # Executar teste único
-        bot.executar_verificacao_unica()
-    else:
-        # Iniciar monitoramento contínuo
-        try:
-            bot.iniciar_monitoramento()
-        except KeyboardInterrupt:
-            logger.info("Monitoramento interrompido pelo usuário")
-        except Exception as e:
-            logger.error(f"Monitoramento interrompido devido a erro: {str(e)}")
+    try:
+        print("📋 Criando instância do bot...")
+        logger.info("📋 Criando instância do bot...")
+        bot = BotMonitorUnidas()
+        print("✅ Bot criado com sucesso!")
+        logger.info("✅ Bot criado com sucesso!")
+        
+        if len(sys.argv) > 1 and sys.argv[1] == '--test':
+            # Executar teste único
+            print("🧪 Modo teste ativado")
+            logger.info("🧪 Modo teste ativado")
+            bot.executar_verificacao_unica()
+        else:
+            # Iniciar monitoramento contínuo
+            print("🔄 Iniciando monitoramento contínuo...")
+            logger.info("🔄 Iniciando monitoramento contínuo...")
+            try:
+                bot.iniciar_monitoramento()
+            except KeyboardInterrupt:
+                print("⏹️ Monitoramento interrompido pelo usuário")
+                logger.info("⏹️ Monitoramento interrompido pelo usuário")
+            except Exception as e:
+                print(f"❌ Monitoramento interrompido devido a erro: {str(e)}")
+                logger.error(f"❌ Monitoramento interrompido devido a erro: {str(e)}")
+                raise
+                
+    except Exception as e:
+        print(f"💥 ERRO CRÍTICO NA INICIALIZAÇÃO: {str(e)}")
+        logger.error(f"💥 ERRO CRÍTICO NA INICIALIZAÇÃO: {str(e)}")
+        import traceback
+        print("📋 TRACEBACK COMPLETO:")
+        traceback.print_exc()
+        logger.error(f"📋 TRACEBACK: {traceback.format_exc()}")
+        raise
 
 if __name__ == "__main__":
     main()
