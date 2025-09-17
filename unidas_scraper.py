@@ -63,6 +63,13 @@ class UnidasScraper:
                     '/usr/bin/chromium-browser'
                 ]
                 
+                # Também verificar ChromeDriver
+                chromedriver_paths = [
+                    '/usr/local/bin/chromedriver',
+                    '/usr/bin/chromedriver',
+                    '/usr/lib/chromium-browser/chromedriver'
+                ]
+                
                 chrome_found = None
                 for path in chrome_paths:
                     if os.path.exists(path):
@@ -70,11 +77,24 @@ class UnidasScraper:
                         logger.info(f"Chrome encontrado em: {path}")
                         break
                 
+                # Verificar se ChromeDriver existe
+                chromedriver_found = None
+                for path in chromedriver_paths:
+                    if os.path.exists(path):
+                        chromedriver_found = path
+                        logger.info(f"ChromeDriver encontrado em: {path}")
+                        break
+                
                 if chrome_found:
                     opcoes_chrome.binary_location = chrome_found
                     try:
-                        self.driver = webdriver.Chrome(options=opcoes_chrome)
-                        logger.info("Chrome inicializado com sucesso")
+                        if chromedriver_found:
+                            servico = Service(chromedriver_found)
+                            self.driver = webdriver.Chrome(service=servico, options=opcoes_chrome)
+                            logger.info(f"Chrome inicializado com ChromeDriver: {chromedriver_found}")
+                        else:
+                            self.driver = webdriver.Chrome(options=opcoes_chrome)
+                            logger.info("Chrome inicializado com ChromeDriver padrão")
                     except Exception as e:
                         logger.error(f"Erro ao inicializar Chrome: {e}")
                         # Fallback para webdriver-manager
