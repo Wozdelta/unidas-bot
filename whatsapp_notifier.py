@@ -37,8 +37,12 @@ class NotificadorWhatsApp:
             logger.info(f"Abrindo WhatsApp Web para enviar mensagem para {telefone_destino}")
             logger.info(f"Mensagem: {mensagem}")
             
-            # Abrir WhatsApp Web no navegador padrão
-            webbrowser.open(url_whatsapp)
+            # Em ambiente servidor, não abrir navegador - apenas registrar
+            if os.getenv('RAILWAY_ENVIRONMENT') or os.getenv('DOCKER_CONTAINER'):
+                logger.info("Ambiente servidor detectado - mensagem registrada para envio manual")
+            else:
+                # Abrir WhatsApp Web no navegador padrão apenas em ambiente local
+                webbrowser.open(url_whatsapp)
             
             # Também registrar a mensagem para envio manual se necessário
             self._registrar_mensagem_para_envio_manual(mensagem, telefone_destino)

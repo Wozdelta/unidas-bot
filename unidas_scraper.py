@@ -53,29 +53,50 @@ class UnidasScraper:
         try:
             if sistema == 'linux':
                 # Configuração para ambiente Linux (Railway/Docker)
-                logger.info("Detectado ambiente Linux - configurando Chromium")
+                logger.info("Detectado ambiente Linux - configurando Chrome")
                 
-                # Configuração para Docker/Railway com Google Chrome
-                logger.info("Configurando Google Chrome para ambiente Docker...")
+                # Verificar se Chrome existe antes de tentar usar
+                chrome_paths = [
+                    '/usr/bin/google-chrome-stable',
+                    '/usr/bin/google-chrome',
+                    '/usr/bin/chromium',
+                    '/usr/bin/chromium-browser'
+                ]
                 
-                # Usar Google Chrome instalado via apt
-                opcoes_chrome.binary_location = '/usr/bin/google-chrome-stable'
+                chrome_found = None
+                for path in chrome_paths:
+                    if os.path.exists(path):
+                        chrome_found = path
+                        logger.info(f"Chrome encontrado em: {path}")
+                        break
                 
-                # Usar ChromeDriver do sistema
-                try:
-                    self.driver = webdriver.Chrome(options=opcoes_chrome)
-                    logger.info("Google Chrome inicializado com sucesso")
-                except Exception as e:
-                    logger.error(f"Erro ao inicializar Google Chrome: {e}")
-                    # Fallback para webdriver-manager
+                if chrome_found:
+                    opcoes_chrome.binary_location = chrome_found
                     try:
-                        from webdriver_manager.chrome import ChromeDriverManager
-                        servico = Service(ChromeDriverManager().install())
-                        self.driver = webdriver.Chrome(service=servico, options=opcoes_chrome)
-                        logger.info("Chrome inicializado com webdriver-manager")
-                    except Exception as e2:
-                        logger.error(f"Erro no fallback: {e2}")
-                        raise Exception("Não foi possível inicializar o navegador Chrome")
+                        self.driver = webdriver.Chrome(options=opcoes_chrome)
+                        logger.info("Chrome inicializado com sucesso")
+                    except Exception as e:
+                        logger.error(f"Erro ao inicializar Chrome: {e}")
+                        # Fallback para webdriver-manager
+                        try:
+                            from webdriver_manager.chrome import ChromeDriverManager
+                            servico = Service(ChromeDriverManager().install())
+                            opcoes_chrome.binary_location = chrome_found
+                            self.driver = webdriver.Chrome(service=servico, options=opcoes_chrome)
+                            logger.info("Chrome inicializado com webdriver-manager")
+                        except Exception as e2:
+                            logger.error(f"Erro no fallback: {e2}")
+                            raise Exception("Não foi possível inicializar o navegador Chrome")
+                else:
+                    logger.error("Nenhum browser Chrome/Chromium encontrado no sistema")
+                    # Listar arquivos para debug
+                    try:
+                        import subprocess
+                        result = subprocess.run(['ls', '-la', '/usr/bin/'], capture_output=True, text=True)
+                        logger.info(f"Conteúdo de /usr/bin/: {result.stdout[:500]}")
+                    except:
+                        pass
+                    raise Exception("Chrome/Chromium não encontrado")
             else:
                 # Configuração para Windows
                 logger.info("Detectado ambiente Windows - configurando Chrome")
